@@ -16,7 +16,7 @@ def invoke(invocation, **kwargs):
 invocation = f'psql -d {args.db_name}'
 
 if args.docker_container:
-    invocation = 'docker exec -i -u postgres {args.docker_container} {invocation}'
+    invocation = f'docker exec -i -u postgres {args.docker_container} {invocation}'
 
 with open(args.dump_path) as f:
     invoke(invocation, stdin=f)
