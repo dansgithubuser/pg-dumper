@@ -11,12 +11,22 @@ args = parser.parse_args()
 
 def invoke(invocation, **kwargs):
     kwargs.setdefault('check', True)
+    if args.docker_container:
+        invocation = f'docker exec -i -u postgres {args.docker_container} {invocation}'
     return subprocess.run(invocation.split(), **kwargs)
 
-invocation = f'psql -d {args.db_name}'
-
-if args.docker_container:
-    invocation = f'docker exec -i -u postgres {args.docker_container} {invocation}'
+tables = [
+    i
+    for i in invoke(f"psql -d {args.db_name} -c \d -t", capture_output=True).stdout.decode().splitlines()
+    if i
+]
+if tables:
+    print(
+        'Database already has a schema. '
+        'This means data must be inserted carefully to avoid constraint errors, which pg_dump does not do. '
+        'Enter to proceed, ctrl-c to abort.'
+    )
+    input()
 
 with open(args.dump_path) as f:
-    invoke(invocation, stdin=f)
+    invoke(f'psql -d {args.db_name}', stdin=f)
